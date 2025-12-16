@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableros Sec. Seg. Mercedes</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+  <style>
+    /* ================== ESTILOS GLOBALES / BASE ================== */
+    :root {
+      --azul-principal: #0d47a1;
+      --verde-principal: #4caf50;
+      --texto: #212121;
+      --fondo: #f5f5f5;
+      --blanco: #FFFFFF;
+      --color-nuevo: #4db6ac;
+      --color-instalacion: #f44336;
+      --color-energia: #ff9800;
+      --color-conectividad: #66bb6a;
+      --color-switch: #5e35b1;
+      --color-informes: #26a69a;
+      --color-mapa: var(--azul-principal);
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+      padding: 20px;
+      font-size: 16px;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--azul-principal);
+      margin-bottom: 20px;
+      font-size: 5rem;
+    }
+
+    /* Logo/Icono a la izquierda */
+    .icono-izq {
+      width: 10rem;
+      height: 40px;
+      margin-right: 15px;
+      vertical-align: middle;
+    }
+
+
+
+    /* ================== TARJETAS DEL PANEL ================== */
+    .cuadricula-panel {
+      display: grid;
+      gap: 25px;
+      margin: 20px auto;
+      max-width: 100vh;
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .boton-tarjeta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 10rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      color: var(--blanco);
+      font-weight: bold;
+      transition: 0.3s;
+      padding: 5px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .tarjeta-nuevo {
+      background-color: var(--color-nuevo);
+    }
+
+    .tarjeta-instalacion {
+      background-color: var(--color-instalacion);
+    }
+
+    .tarjeta-energia {
+      background-color: var(--color-energia);
+    }
+
+    .tarjeta-conectividad {
+      background-color: var(--color-conectividad);
+    }
+
+    .tarjeta-informes {
+      background-color: var(--color-informes);
+    }
+
+    .tarjeta-mapa {
+      background-color: var(--color-mapa);
+    }
+
+    .tarjeta-switch {
+      background-color: var(--color-switch);
+    }
+
+    /* Estilo para el texto dentro del botón */
+    .boton-tarjeta span {
+      width: 100%;
+      display: block;
+      text-align: center;
+      font-size: 1.75rem;
+      line-height: 1.2;
+      white-space: normal;
+    }
+
+    .boton-tarjeta:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      /* Usamos un color de hover genérico más oscuro */
+      filter: brightness(1.1);
+    }
+
+    .boton-tarjeta .material-icons {
+      font-size: 3.5rem;
+      margin-bottom: 5px;
+    }
+
+    /* ================== CONTENEDORES DE PÁGINAS ================== */
+    .page-content {
+      display: none;
+      max-width: 95%;
+      margin: 0 auto;
+    }
+
+    .active-page {
+      display: block;
+    }
+
+    .contenedor-formulario {
+      background-color: var(--blanco);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    /* ================== SISTEMA DE REJILLA SIMPLE (REEMPLAZANDO COL) ================== */
+    /* Aplicado solo a la sección de Latitud/Longitud para demostrar CSS puro */
+    .grid-campos-dobles {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .grid-campos-dobles>.input-field {
+      flex: 1 1 50%;
+      /* Ocupa la mitad del espacio */
+      margin-bottom: 0;
+      font-size: 1.5rem;
+    }
+
+    /* Media Query para pantallas pequeñas, asegurando la responsividad */
+    @media (max-width: 600px) {
+      .grid-campos-dobles {
+        flex-direction: column;
+        gap: 0;
+      }
+    }
+
+    .btn-volver {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--verde-principal);
+      color: var(--blanco);
+      font-weight: bold;
+      padding: 7px 10px;
+      border-radius: 30px;
+      cursor: pointer;
+      margin: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-volver:hover {
+      background: #66bb6a;
+      transform: translateY(-2px);
+    }
+
+    .btn {
+      font-size: 1.25rem;
+    }
+
+    #tablaResultadosInforme table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    #tablaResultadosInforme th,
+    #tablaResultadosInforme td {
+      padding: 8px;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    /* Clases de estado (para Materialize en el HTML) */
+    .amber.lighten-4 {
+      background-color: #ffecb3 !important;
+    }
+
+    .red.lighten-4 {
+      background-color: #ffcdd2 !important;
+    }
+
+    .green.lighten-4 {
+      background-color: #c8e6c9 !important;
+    }
+
+    .deep-orange.lighten-4 {
+      background-color: #ffccbc !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="panel-page" class="page-content active-page">
+    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
+    <h1>Gestión de Tableros</h1>
+    <div class="cuadricula-panel">
+      <div class="boton-tarjeta tarjeta-nuevo" data-page="nuevo">
+        <i class="material-icons">add_box</i><span>Nuevo Tablero</span>
+      </div>
+
+      <div class="boton-tarjeta tarjeta-instalacion" data-page="instalacion">
+        <i class="material-icons">arrow_downward</i><span>Registrar Instalación</span>
+      </div>
+
+      <div class="boton-tarjeta tarjeta-energia" data-page="energia">
+        <i class="material-icons">bolt</i><span>Registrar Energía</span>
+      </div>
+
+      <div class="boton-tarjeta tarjeta-conectividad" data-page="conectividad">
+        <i class="material-icons">router</i><span>Registrar Conectividad</span>
+      </div>
+
+      <div class="boton-tarjeta tarjeta-switch" data-page="switch">
+        <i class="material-icons">settings_ethernet</i><span>Agregar Switch</span>
+      </div>
+
+      <div class="boton-tarjeta tarjeta-informes" data-page="informes">
+        <i class="material-icons">article</i><span>Informes</span>
+      </div>
+
+      <div class="boton-tarjeta tarjeta-mapa" id="btnMapa" data-page="mapa">
+        <i class="material-icons">add_location</i><span>Ver Mapa</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="nuevo-page" class="page-content">
+    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
+    <div class="btn-volver" data-page="panel"><i class="material-icons">arrow_back</i> Volver al Panel</div>
+    <div class="contenedor-formulario">
+      <h2>Pedido de Nuevo Tablero</h2>
+      <form id="form-nuevo-tablero">
+        <div class="input-field">
+          <input type="text" id="direccion" required>
+          <label for="direccion">Dirección/Ubicación</label>
+        </div>
+
+        <div class="input-field">
+          <select id="marcado_select" required>
+                        <option value="" disabled selected>¿Está marcado en el lugar?</option>
+                        <option value="SI">SI</option>
+                        <option value="NO">NO (Detallar en Observaciones)</option>
+                    </select>
+          <label>Estado de Marcado</label>
+        </div>
+
+        <div class="input-field">
+          <textarea id="observaciones" class="materialize-textarea"></textarea>
+          <label for="observaciones">Observaciones</label>
+        </div>
+
+        <button type="submit" class="btn waves-effect waves-light"
+                    style="background-color: var(--azul-principal);">
+                    Crear Tablero (Estado: PEDIDO)
+                </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="instalacion-page" class="page-content">
+    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
+    <div class="btn-volver" data-page="panel"><i class="material-icons">arrow_back</i> Volver al Panel</div>
+    <div class="contenedor-formulario">
+      <h2>Registrar Instalación</h2>
+      <form id="form-instalacion">
+        <div class="input-field">
+          <input type="text" id="autocompleteInstalacion" class="autocomplete" required>
+          <label for="autocompleteInstalacion">Buscar Tablero (Estado: PEDIDO)</label>
+        </div>
+        <input type="hidden" id="tableroInstalacionId">
+
+        <div class="grid-campos-dobles">
+          <div class="input-field">
+            <input type="text" id="instalacionLatitud" readonly placeholder="Latitud" value="">
+            <label for="instalacionLatitud">Latitud </label>
+          </div>
+          <div class="input-field">
+            <input type="text" id="instalacionLongitud" readonly placeholder="Longitud" value="">
+            <label for="instalacionLongitud">Longitud </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col s12">
+            <button type="button" id="btnObtenerUbicacion"
+                            class="btn waves-effect waves-light blue darken-1">
+                            <i class="material-icons left">location_on</i> Obtener Coordenadas
+                        </button>
+            <span id="ubicacionStatus" style="margin-left: 10px; font-style: italic;"></span>
+          </div>
+        </div>
+
+        <div class="input-field">
+          <textarea id="obsInstalacion" class="materialize-textarea"></textarea>
+          <label for="obsInstalacion">Observaciones de la Instalación</label>
+        </div>
+
+        <button type="submit" class="btn waves-effect waves-light red darken-2">Registrar (Cambiar a
+                    INSTALADO)</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="energia-page" class="page-content">
+    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
+    <div class="btn-volver" data-page="panel"><i class="material-icons">arrow_back</i> Volver al Panel</div>
+    <div class="contenedor-formulario">
+      <h2>Registrar Energía</h2>
+      <form id="form-energia">
+        <div class="input-field">
+          <input type="text" id="autocompleteEnergia" class="autocomplete" required>
+          <label for="autocompleteEnergia">Buscar Tablero (Instalado/Energía Pendiente)</label>
+        </div>
+        <input type="hidden" id="tableroEnergiaId">
+
+        <div class="input-field">
+          <select id="proveedorEnergia" required>
+                        <option value="" disabled selected>Seleccione el Proveedor</option>
+                        <option value="EDEN">EDEN</option>
+                        <option value="OTRA">Otra (Especificar)</option>
+                    </select>
+          <label>Proveedor de Energía</label>
+        </div>
+        <div class="input-field detalle-proveedor-energia" style="display: none;">
+          <input type="text" id="detalleProveedorEnergia">
+          <label for="detalleProveedorEnergia">Detalle del Proveedor (si es 'Otra')</label>
+        </div>
+
+        <div class="input-field">
+          <textarea id="obsEnergia" class="materialize-textarea"></textarea>
+          <label for="obsEnergia">Observaciones</label>
+        </div>
+        <button type="submit" class="btn waves-effect waves-light orange darken-2">
+                    Registrar (Cambiar Energía a CONECTADA)
+                </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="conectividad-page" class="page-content">
+    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
+    <div class="btn-volver" data-page="panel"><i class="material-icons">arrow_back</i> Volver al Panel</div>
+    <div class="contenedor-formulario">
+      <h2>Registrar Conectividad</h2>
+      <form id="form-conectividad">
+        <div class="input-field">
+          <input type="text" id="autocompleteConectividad" class="autocomplete" required>
+          <label for="autocompleteConectividad">Buscar Tablero (Instalado/Conectividad Pendiente)</label>
+        </div>
+        <input type="hidden" id="tableroConectividadId">
+
+        <div class="input-field">
+          <select id="tipoConectividad" required>
+                        <option value="" disabled selected>Seleccione el Tipo</option>
+                        <option value="FIBRA OPTICA">FIBRA OPTICA</option>
+                        <option value="AIRE">AIRE</option>
+                        <option value="CASCADA">CASCADA</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+          <label>Tipo de Conectividad</label>
+        </div>
+
+        <div class="input-field">
+          <select id="proveedorConectividad" required>
+                        <option value="" disabled selected>Seleccione el Proveedor</option>
+                        <option value="INTERFAS">INTERFAS</option>
+                        <option value="IPNEXT">IPNEXT</option>
+                        <option value="MUNICIPALIDAD">MUNICIPALIDAD</option>
+                        <option value="COM">COM</option>
+                        <option value="OTRA">Otra (Especificar)</option>
+                    </select>
+          <label>Proveedor de Servicio</label>
+        </div>
+        <div class="input-field detalle-proveedor-conectividad" style="display: none;">
+          <input type="text" id="detalleProveedorConectividad">
+          <label for="detalleProveedorConectividad">Detalle del Proveedor (si es 'Otra')</label>
+        </div>
+
+        <div class="input-field">
+          <textarea id="obsConectividad" class="materialize-textarea"></textarea>
+          <label for="obsConectividad">Observaciones</label>
+        </div>
+        <button type="submit" class="btn waves-effect waves-light green darken-2">
+                    Registrar (Cambiar Conectividad a CONECTADA)
+                </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="switch-page" class="page-content">
+    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
+    <div class="btn-volver" data-page="panel"><i class="material-icons">arrow_back</i> Volver al Panel</div>
+    <div class="contenedor-formulario">
+      <h2>Actualizar Switch / Conectividad</h2>
+      <form id="form-switch">
+        <div class="input-field">
+          <input type="text" id="autocompleteSwitch" class="autocomplete" required>
+          <label for="autocompleteSwitch">Buscar Tablero (Instalado/Conectado)</label>
+        </div>
+        <input type="hidden" id="tableroSwitchId">
+
+        <p style="font-style: italic; margin-top: 15px;">Tablero seleccionado:
+          <span id="switchCurrentDireccion">N/A</span>
+        </p>
+
+        <div class="input-field">
+          <input type="text" id="inputSwitch" required>
+          <label for="inputSwitch">SW-X-123</label>
+        </div>
+
+        <div class="input-field">
+          <select id="tipoConectividadSwitch" required>
+                        <option value="" disabled selected>Seleccione el Tipo (Actual: N/A)</option>
+                        <option value="FIBRA">FIBRA OPTICA</option>
+                        <option value="AIRE">AIRE</option>
+                        <option value="CASCADA">CASCADA</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+          <label>Tipo de Conectividad</label>
+        </div>
+
+        <div class="input-field">
+          <select id="proveedorConectividadSwitch" required>
+            <option value="" disabled selected>Seleccione el Proveedor</option>
+            <option value="INTERFAS">INTERFAS</option>
+            <option value="IPNEXT">IP NEXT</option>
+            <option value="MUNICIPALIDAD">MUNICIPALIDAD</option>
+            <option value="COM">COM</option>
+            <option value="OTRA">Otra (Especificar)</option>
+          </select>
+          <label>Proveedor de Servicio</label>
+        </div>
+        <div class="input-field detalle-proveedor-switch" style="display: none;">
+          <input type="text" id="detalleProveedorSwitch">
+          <label for="detalleProveedorSwitch">Detalle del Proveedor (si es 'Otra')</label>
+        </div>
+
+        <div class="input-field">
+          <textarea id="obsSwitch" class="materialize-textarea"></textarea>
+          <label for="obsSwitch">Observaciones de la Actualización</label>
+        </div>
+
+        <button type="submit" class="btn waves-effect waves-light"
+                    style="background-color: var(--color-instalacion);">Actualizar datos
+                </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="informes-page" class="page-content">
+    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
+    <div class="btn-volver" data-page="panel"><i class="material-icons">arrow_back</i> Volver al Panel</div>
+    <div class="contenedor-formulario">
+      <h2>📊 Generación de Informes y Estado</h2>
+      <form id="form-filtros">
+        <div class="row">
+          <div class="input-field col s12 m6">
+            <select id="filtroEstado">
+                            <option value="">Cualquier Estado</option>
+                            <option value="PEDIDO">PEDIDO</option>
+                            <option value="INSTALADO">INSTALADO</option>
+                        </select>
+            <label>Filtrar por Estado</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <select id="filtroEnergia">
+                            <option value="">Cualquier Energía</option>
+                            <option value="PENDIENTE">PENDIENTE</option>
+                            <option value="CONECTADA">CONECTADA</option>
+                        </select>
+            <label>Filtrar por Energía</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s12 m6">
+            <select id="filtroConectividad">
+                            <option value="">Cualquier Conectividad</option>
+                            <option value="PENDIENTE">PENDIENTE</option>
+                            <option value="CONECTADA">CONECTADA</option>
+                        </select>
+            <label>Filtrar por Conectividad</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <input type="text" id="filtroDireccion" placeholder="Escriba parte de la dirección">
+            <label for="filtroDireccion">Filtrar por Dirección (contiene)</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col s12 m6 l4">
+            <button type="submit" class="btn waves-effect waves-light blue darken-1" style="width: 100%;">
+                            <i class="material-icons left">search</i> Vista Previa
+                        </button>
+          </div>
+          <div class="col s12 m6 l8 right-align">
+            <span id="conteoResultados" style="margin-right: 15px; font-weight: bold; font-size: 1.1em;">
+                            Resultados: <span id="countDescarga" class="blue-text darken-2">0</span>
+            </span>
+            <button id="btnDescargarInforme" type="button" class="btn waves-effect waves-light red darken-4"
+                            disabled>
+                            <i class="material-icons left">picture_as_pdf</i> Descargar Informe PDF
+                        </button>
+          </div>
+        </div>
+      </form>
+
+      <div class="divider" style="margin: 20px 0;"></div>
+
+      <h3>Resultados de la Búsqueda</h3>
+      <div class="responsive-table" id="tablaResultadosInforme">
+        <p class="center-align grey-text">Presione "Vista Previa" para mostrar los resultados.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+            // Inicialización de Materialize
+            M.AutoInit();
+            M.updateTextFields();
+
+            const SCRIPT_RUN = google.script.run.withFailureHandler(err => {
+                M.toast({
+                    html: 'Error del servidor: ' + err.message,
+                    classes: 'red darken-3'
+                });
+                console.error(err);
+                document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+            });
+
+            // --- Navegación y Utilidades ---
+
+            function ocultarTodas() {
+                document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active-page'));
+            }
+
+            // Función para obtener la clase de color para una celda de la vista previa
+            function getClassForStatus(status) {
+                status = status ? status.toUpperCase() : '';
+                switch (status) {
+                    case 'PEDIDO':
+                        return 'amber lighten-4';
+                    case 'INSTALADO':
+                        return 'red lighten-4';
+                    case 'CONECTADA':
+                        return 'green lighten-4';
+                    case 'PENDIENTE':
+                        return 'deep-orange lighten-4';
+                    default:
+                        return '';
+                }
+            }
+
+
+            window.showPage = function (pageId) {
+                ocultarTodas();
+                const page = document.getElementById(pageId + '-page');
+                if (page) page.classList.add('active-page');
+
+                // Registro de acceso (sólo si se cambia de página)
+                if (pageId !== 'panel' && window._lastPage !== pageId) {
+                    if (SCRIPT_RUN.registrarAccesoUsuario) {
+                        SCRIPT_RUN.registrarAccesoUsuario('Página: ' + pageId.toUpperCase());
+                    }
+                    window._lastPage = pageId;
+                }
+
+                // Cargar datos dinámicos (Autocompletes)
+                if (pageId === 'instalacion') {
+                    initAutocomplete('autocompleteInstalacion', 'tableroInstalacionId', 'listarTablerosPedido');
+                    // Reiniciar el estado de ubicación y forzar actualización de Materialize
+                    document.getElementById('instalacionLatitud').value = '';
+                    document.getElementById('instalacionLongitud').value = '';
+                    const statusSpan = document.getElementById('ubicacionStatus');
+                    if (statusSpan) statusSpan.textContent = '';
+                    M.updateTextFields();
+                }
+                if (pageId === 'energia') initAutocomplete('autocompleteEnergia', 'tableroEnergiaId', 'listarTablerosParaEnergia');
+                if (pageId === 'conectividad') initAutocomplete('autocompleteConectividad', 'tableroConectividadId', 'listarTablerosParaConectividad');
+
+                // LÓGICA PARA LA PÁGINA SWITCH (NUEVO)
+                if (pageId === 'switch') {
+                    initAutocomplete('autocompleteSwitch', 'tableroSwitchId', 'listarTablerosParaSwitch', true);
+                }
+                // FIN LÓGICA SWITCH
+
+                // Limpia el informe cuando se sale de esa sección
+                if (pageId !== 'informes') {
+                    document.getElementById('tablaResultadosInforme').innerHTML = '<p class="center-align grey-text">Presione "Vista Previa" para mostrar los resultados.</p>';
+                    document.getElementById('btnDescargarInforme').disabled = true;
+                    document.getElementById('countDescarga').textContent = 0;
+                }
+
+                // Re-inicializar selects en todas las páginas donde se usan
+                document.querySelectorAll('select').forEach(el => {
+                    const instance = M.FormSelect.getInstance(el);
+                    if (instance) instance.destroy();
+                    M.FormSelect.init(el);
+                });
+            };
+
+            function abrirMapa() {
+                const mapUrl = "https://www.google.com/maps/d/edit?mid=16ZDkCjQQJKOO9w6t7rGCaQ9ibLUH8ps&ll=-34.626221418673786%2C-59.42575859457151&z=17";
+                window.open(mapUrl, '_blank');
+                M.toast({
+                    html: 'Abriendo Mapa en una nueva pestaña...',
+                    classes: 'blue'
+                });
+                if (SCRIPT_RUN.registrarAccesoUsuario) {
+                    SCRIPT_RUN.registrarAccesoUsuario('Página: MAPA');
+                }
+            }
+
+            // Asignar clicks de tarjetas y botones "Volver"
+            document.querySelectorAll('.boton-tarjeta[data-page], .btn-volver[data-page]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const pageId = el.getAttribute('data-page');
+
+                    if (pageId === 'mapa') {
+                        abrirMapa();
+                    } else {
+                        window.showPage(pageId);
+                    }
+                });
+            });
+
+            // Función genérica para manejar el cambio de proveedor ("Otra" opción)
+            function handleProveedorChange(selectId, detailSelector) {
+                const selectElement = document.getElementById(selectId);
+                if (!selectElement) return;
+
+                selectElement.addEventListener('change', function () {
+                    const detailDiv = document.querySelector(detailSelector);
+                    const detailInput = detailDiv.querySelector('input');
+
+                    if (this.value === 'OTRA') {
+                        detailDiv.style.display = 'block';
+                        if (detailInput) detailInput.setAttribute('required', 'true');
+                    } else {
+                        detailDiv.style.display = 'none';
+                        if (detailInput) {
+                            detailInput.value = '';
+                            detailInput.removeAttribute('required');
+                        }
+                    }
+                    M.updateTextFields();
+                });
+            }
+
+            // --- FUNCIÓN initAutocomplete PARA CARGAR DETALLES (SWITCH) ---
+            window.initAutocomplete = function (inputId, hiddenId, serverFunc, fetchDetails = false) {
+    const elem = document.getElementById(inputId);
+    if (!elem) return;
+
+    // 1. Limpiar instancia previa si existe
+    const instance = M.Autocomplete.getInstance(elem);
+    if (instance) instance.destroy();
+
+    // 2. Llamada al servidor
+    google.script.run
+        .withFailureHandler(err => {
+            console.error("Error en " + serverFunc + ": ", err);
+            M.toast({ html: 'Error cargando datos de ' + serverFunc, classes: 'red' });
+        })
+        .withSuccessHandler(data => {
+            if (!Array.isArray(data)) {
+                console.warn(serverFunc + " no devolvió un array válido.");
+                return;
+            }
+
+            const opciones = {};
+            const detalles = {};
+
+            data.forEach(o => {
+                const key = `${o.direccion} (${o.id})`;
+                opciones[key] = null;
+                if (fetchDetails) detalles[o.id] = o;
+            });
+
+            M.Autocomplete.init(elem, {
+                data: opciones,
+                limit: 10,
+                minLength: 1,
+                onAutocomplete: val => {
+                    const match = val.match(/\(([^)]+)\)$/);
+                    const selectedId = match ? match[1] : '';
+                    document.getElementById(hiddenId).value = selectedId;
+
+
+if (fetchDetails && selectedId && detalles[selectedId]) {
+    const tablero = detalles[selectedId];
+    
+    // 1. Cargar Dirección y Switch
+    document.getElementById('switchCurrentDireccion').textContent = tablero.direccion;
+    document.getElementById('inputSwitch').value = tablero.switch || '';
+
+    // 2. Cargar Tipo de Conectividad
+    const tipoSel = document.getElementById('tipoConectividadSwitch');
+    if (tipoSel) {
+        // Normalizamos el valor a mayúsculas para comparar
+        const valorPlanilla = (tablero.tipoConectividad || '').toString().trim().toUpperCase();
+        tipoSel.value = valorPlanilla; 
+        M.FormSelect.init(tipoSel); // Re-inicializa Materialize para mostrar el cambio
+    }
+
+    // 3. Cargar Proveedor
+    const provSel = document.getElementById('proveedorConectividadSwitch');
+    const inputDetalle = document.getElementById('detalleProveedorSwitch');
+    const divDetalle = document.querySelector('.detalle-proveedor-switch');
+
+    if (provSel) {
+        const provPlanilla = (tablero.proveedorConectividad || '').toString().trim().toUpperCase();
+        
+        // Verificamos si el proveedor de la planilla existe en nuestras opciones
+        const existeOpcion = Array.from(provSel.options).some(opt => opt.value === provPlanilla);
+
+        if (existeOpcion) {
+            provSel.value = provPlanilla;
+            divDetalle.style.display = 'none';
+        } else if (provPlanilla !== "") {
+            // Si el proveedor no está en la lista, marcamos "OTRA" y mostramos el detalle
+            provSel.value = "OTRA";
+            inputDetalle.value = provPlanilla;
+            divDetalle.style.display = 'block';
+        }
+        M.FormSelect.init(provSel);
+    }
+
+    M.updateTextFields(); // Sube las etiquetas de los inputs de texto
+
+                        M.toast({ html: 'Datos cargados', classes: 'blue' });
+                    }
+                }
+            });
+        })[serverFunc](); // <--- Esta es la forma correcta de llamar dinámicamente
+};
+
+            // --- Handlers de Formulario ---
+            // 1. NUEVO TABLERO
+            document.getElementById('form-nuevo-tablero').addEventListener('submit', e => {
+                e.preventDefault();
+                const btn = e.submitter;
+                btn.disabled = true;
+
+                const data = {
+                    direccion: document.getElementById('direccion').value,
+                    marcado: document.getElementById('marcado_select').value,
+                    observaciones: document.getElementById('observaciones').value
+                };
+
+                SCRIPT_RUN.withSuccessHandler(res => {
+                    M.toast({
+                        html: res.success ? `Tablero ${res.id} creado con éxito.` : `Error: ${res.message}`,
+                        classes: res.success ? 'green darken-1' : 'red darken-3'
+                    });
+                    document.getElementById('form-nuevo-tablero').reset();
+                    M.updateTextFields();
+                    btn.disabled = false;
+                }).crearNuevoTablero(data);
+            });
+
+            // 2. GEOLOCALIZACIÓN Y REGISTRO DE INSTALACIÓN
+            function obtenerUbicacion() {
+                const latInput = document.getElementById('instalacionLatitud');
+                const lngInput = document.getElementById('instalacionLongitud');
+                const statusSpan = document.getElementById('ubicacionStatus');
+
+                latInput.value = '';
+                lngInput.value = '';
+                M.updateTextFields();
+                statusSpan.textContent = 'Buscando ubicación...';
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude.toFixed(6);
+                            const lng = position.coords.longitude.toFixed(6);
+
+                            latInput.value = lat;
+                            lngInput.value = lng;
+                            M.updateTextFields();
+                            statusSpan.textContent = 'Ubicación obtenida.';
+                            M.toast({
+                                html: `Ubicación registrada: ${lat}, ${lng}`,
+                                classes: 'blue'
+                            });
+                        },
+                        (error) => {
+                            let msg = 'Error de ubicación: ';
+                            switch (error.code) {
+                                case error.PERMISSION_DENIED:
+                                    msg += "Usuario denegó la solicitud.";
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    msg += "Información de ubicación no disponible.";
+                                    break;
+                                case error.TIMEOUT:
+                                    msg += "Tiempo de espera agotado.";
+                                    break;
+                                default:
+                                    msg += "Error desconocido.";
+                                    break;
+                            }
+                            console.error("Error Geolocation:", msg, error);
+                            statusSpan.textContent = 'Error al obtener ubicación.';
+                            M.toast({
+                                html: msg,
+                                classes: 'red darken-3'
+                            });
+                        }, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                    );
+                } else {
+                    statusSpan.textContent = 'Geolocalización no soportada por su navegador.';
+                    M.toast({
+                        html: 'Geolocalización no disponible.',
+                        classes: 'red darken-3'
+                    });
+                }
+            }
+
+            // Asignar la función al botón Obtener Coordenadas
+            document.getElementById('btnObtenerUbicacion').addEventListener('click', obtenerUbicacion);
+
+            // Manejador de SUBMIT para la Instalación
+            document.getElementById('form-instalacion').addEventListener('submit', e => {
+                e.preventDefault();
+                const btn = e.submitter;
+                btn.disabled = true;
+
+                const id = document.getElementById('tableroInstalacionId').value;
+                const latitud = document.getElementById('instalacionLatitud').value;
+                const longitud = document.getElementById('instalacionLongitud').value;
+
+                if (!id) {
+                    M.toast({
+                        html: 'Debe seleccionar un Tablero.'
+                    });
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (!latitud || !longitud) {
+                    M.toast({
+                        html: 'Advertencia: Coordenadas de Latitud y Longitud vacías. Asegúrese de haber presionado "Obtener Coordenadas" o ingrese manualmente.', classes: 'orange darken-3'
+                    });
+                }
+
+                const data = {
+                    id: id,
+                    latitud: latitud,
+                    longitud: longitud,
+                    observaciones: document.getElementById('obsInstalacion').value
+                };
+
+                SCRIPT_RUN.withSuccessHandler(res => {
+                    M.toast({
+                        html: res.success ? `Tablero ${id} instalado con éxito y coordenadas registradas.` : `Error: ${res.message}`,
+                        classes: res.success ? 'green darken-1' : 'red darken-3'
+                    });
+                    document.getElementById('form-instalacion').reset();
+                    M.updateTextFields();
+                    btn.disabled = false;
+                    showPage('panel');
+                }).registrarInstalacionTablero(data);
+            });
+
+            // 3. REGISTRAR ENERGÍA
+            handleProveedorChange('proveedorEnergia', '.detalle-proveedor-energia');
+
+            document.getElementById('form-energia').addEventListener('submit', e => {
+                e.preventDefault();
+                const btn = e.submitter;
+                btn.disabled = true;
+
+                const id = document.getElementById('tableroEnergiaId').value;
+                const proveedor = document.getElementById('proveedorEnergia').value;
+                const detalleProveedor = document.getElementById('detalleProveedorEnergia').value;
+                if (!id) {
+                    M.toast({
+                        html: 'Debe seleccionar un Tablero.'
+                    });
+                    btn.disabled = false;
+                    return;
+                }
+
+                const data = {
+                    id: id,
+                    proveedor: proveedor,
+                    detalleProveedor: proveedor === 'OTRA' ? detalleProveedor : proveedor,
+                    observaciones: document.getElementById('obsEnergia').value
+                };
+
+                SCRIPT_RUN.withSuccessHandler(res => {
+                    M.toast({
+                        html: res.success ? `Energía de ${id} CONECTADA.` : `Error: ${res.message}`,
+                        classes: res.success ? 'green darken-1' : 'red darken-3'
+                    });
+                    document.getElementById('form-energia').reset();
+                    M.updateTextFields();
+                    btn.disabled = false;
+                    showPage('panel');
+                }).registrarEnergiaTablero(data);
+            });
+
+            // 4. REGISTRAR CONECTIVIDAD
+            handleProveedorChange('proveedorConectividad', '.detalle-proveedor-conectividad');
+
+            document.getElementById('form-conectividad').addEventListener('submit', e => {
+                e.preventDefault();
+                const btn = e.submitter;
+                btn.disabled = true;
+
+                const id = document.getElementById('tableroConectividadId').value;
+                const proveedor = document.getElementById('proveedorConectividad').value;
+                const detalleProveedor = document.getElementById('detalleProveedorConectividad').value;
+                const tipo = document.getElementById('tipoConectividad').value;
+                if (!id) {
+                    M.toast({
+                        html: 'Debe seleccionar un Tablero.'
+                    });
+                    btn.disabled = false;
+                    return;
+                }
+
+                const data = {
+                    id: id,
+                    proveedor: proveedor,
+                    detalleProveedor: proveedor === 'OTRA' ? detalleProveedor : proveedor,
+                    tipo: tipo,
+                    observaciones: document.getElementById('obsConectividad').value
+                };
+
+                SCRIPT_RUN.withSuccessHandler(res => {
+                    M.toast({
+                        html: res.success ? `Conectividad de ${id} CONECTADA.` : `Error: ${res.message}`,
+                        classes: res.success ? 'green darken-1' : 'red darken-3'
+                    });
+                    document.getElementById('form-conectividad').reset();
+                    M.updateTextFields();
+                    btn.disabled = false;
+                    showPage('panel');
+                }).registrarConectividadTablero(data);
+            });
+
+            // 5. REGISTRAR SWITCH (NUEVO)
+            handleProveedorChange('proveedorConectividadSwitch', '.detalle-proveedor-switch');
+
+            document.getElementById('form-switch').addEventListener('submit', e => {
+                e.preventDefault();
+                const btn = e.submitter;
+                btn.disabled = true;
+
+                const id = document.getElementById('tableroSwitchId').value;
+                const switchName = document.getElementById('inputSwitch').value;
+                const proveedor = document.getElementById('proveedorConectividadSwitch').value;
+                const detalleProveedor = document.getElementById('detalleProveedorSwitch').value;
+                const tipo = document.getElementById('tipoConectividadSwitch').value;
+
+                if (!id) {
+                    M.toast({
+                        html: 'Debe seleccionar un Tablero.'
+                    });
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (!switchName) {
+                    M.toast({
+                        html: 'El campo Switch es obligatorio.'
+                    });
+                    btn.disabled = false;
+                    return;
+                }
+
+                const data = {
+                    id: id,
+                    switch: switchName,
+                    // Actualizar Conectividad si es necesario
+                    proveedor: proveedor,
+                    detalleProveedor: proveedor === 'OTRA' ? detalleProveedor : proveedor,
+                    tipo: tipo,
+                    observaciones: document.getElementById('obsSwitch').value
+                };
+
+                SCRIPT_RUN.withSuccessHandler(res => {
+                    M.toast({
+                        html: res.success ? `Switch ${switchName} vinculado y datos actualizados para ${id}.` : `Error: ${res.message}`,
+                        classes: res.success ? 'green darken-1' : 'red darken-3'
+                    });
+                    document.getElementById('form-switch').reset();
+                    M.updateTextFields();
+                    btn.disabled = false;
+                    showPage('panel');
+                }).vincularSwitchTablero(data);
+            });
+            // FIN REGISTRAR SWITCH
+
+            // 6. INFORMES (Vista Previa y Descarga)
+
+            function generarTablaVistaPrevia(data) {
+                const container = document.getElementById('tablaResultadosInforme');
+                const btnDescarga = document.getElementById('btnDescargarInforme');
+                const countDescarga = document.getElementById('countDescarga');
+                container.innerHTML = '';
+
+                if (data.length === 0) {
+                    container.innerHTML = '<p class="center-align">No se encontraron resultados con los filtros aplicados.</p>';
+                    btnDescarga.disabled = true;
+                    countDescarga.textContent = 0;
+                    return;
+                }
+
+                countDescarga.textContent = data.length;
+                btnDescarga.disabled = false;
+
+                let html = '<table class="striped highlight responsive-table"><thead><tr><th>ID</th><th>Dirección</th><th>Estado</th><th>Energía</th><th>Conect.</th><th>Proveedor</th></tr></thead><tbody>';
+
+                data.slice(0, 400).forEach(r => {
+                    const classEstado = getClassForStatus(r.estado);
+                    const classEnergia = getClassForStatus(r.energia);
+                    const classConectividad = getClassForStatus(r.conectividad);
+
+                    html += `<tr>
+                        <td>${r.id}</td>
+                        <td>${r.direccion}</td>
+                        <td class="${classEstado}">${r.estado}</td>
+                        <td class="${classEnergia}">${r.energia}</td>
+                        <td class="${classConectividad}">${r.conectividad}</td>
+                        <td>${r.proveedor}</td>
+                        </tr>`;
+                });
+
+                html += '</tbody></table>';
+
+                if (data.length > 400) {
+                    html += `<p class="center-align" style="font-style: italic; margin-top: 15px;">Mostrando las primeras 400 filas. El PDF incluirá las ${data.length} filas.</p>`;
+                }
+
+                container.innerHTML = html;
+            }
+
+            // Vista Previa (al enviar el formulario de filtros)
+            document.getElementById('form-filtros').addEventListener('submit', e => {
+                e.preventDefault();
+                const filtros = {
+                    estado: document.getElementById('filtroEstado').value,
+                    energia: document.getElementById('filtroEnergia').value,
+                    conectividad: document.getElementById('filtroConectividad').value,
+                    direccionContains: document.getElementById('filtroDireccion').value
+                };
+
+                SCRIPT_RUN.withSuccessHandler(generarTablaVistaPrevia).listarTablerosFiltrados(filtros);
+            });
+
+            // Descargar PDF (al hacer clic en el botón)
+            document.getElementById('btnDescargarInforme').addEventListener('click', () => {
+                const btn = document.getElementById('btnDescargarInforme');
+                btn.disabled = true;
+
+                const filtrosActuales = {
+                    estado: document.getElementById('filtroEstado').value,
+                    energia: document.getElementById('filtroEnergia').value,
+                    conectividad: document.getElementById('filtroConectividad').value,
+                    direccionContains: document.getElementById('filtroDireccion').value
+                };
+
+                SCRIPT_RUN.withSuccessHandler(base64 => {
+                    try {
+                        const dataUrl = 'data:application/pdf;base64,' + base64;
+                        const a = document.createElement('a');
+                        const ts = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                        a.href = dataUrl;
+                        a.download = `Informe_Tableros_${ts}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        M.toast({
+                            html: 'Informe descargado correctamente.',
+                            classes: 'green darken-1'
+                        });
+                    } catch (err) {
+                        console.error(err);
+                        M.toast({
+                            html: 'Error generando descarga.',
+                            classes: 'red darken-3'
+                        });
+                    } finally {
+                        btn.disabled = false;
+                    }
+                }).generarInformePDF(filtrosActuales);
+            });
+
+            // Mostrar la página principal al cargar
+            window.showPage('panel');
+
+            // Inicializar Selects de Materialize al inicio (Necesario para que el select funcione)
+            document.querySelectorAll('select').forEach(el => M.FormSelect.init(el));
+        });
+  </script>
+</body>
+
+</html>
