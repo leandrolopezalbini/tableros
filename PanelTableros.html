@@ -422,65 +422,7 @@
     </div>
   </div>
 
-  <div id="switch-page" class="page-content">
-    <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
-    <div class="btn-volver" data-page="panel"><i class="material-icons">arrow_back</i> Volver al Panel</div>
-    <div class="contenedor-formulario">
-      <h2>Actualizar Switch / Conectividad</h2>
-      <form id="form-switch">
-        <div class="input-field">
-          <input type="text" id="autocompleteSwitch" class="autocomplete" required>
-          <label for="autocompleteSwitch">Buscar Tablero (Instalado/Conectado)</label>
-        </div>
-        <input type="hidden" id="tableroSwitchId">
-
-        <p style="font-style: italic; margin-top: 15px;">Tablero seleccionado:
-          <span id="switchCurrentDireccion">N/A</span>
-        </p>
-
-        <div class="input-field">
-          <input type="text" id="inputSwitch" required>
-          <label for="inputSwitch">SW-X-123</label>
-        </div>
-
-        <div class="input-field">
-          <select id="tipoConectividadSwitch" required>
-                        <option value="" disabled selected>Seleccione el Tipo (Actual: N/A)</option>
-                        <option value="FIBRA">FIBRA OPTICA</option>
-                        <option value="AIRE">AIRE</option>
-                        <option value="CASCADA">CASCADA</option>
-                        <option value="OTRO">Otro</option>
-                    </select>
-          <label>Tipo de Conectividad</label>
-        </div>
-
-        <div class="input-field">
-          <select id="proveedorConectividadSwitch" required>
-            <option value="" disabled selected>Seleccione el Proveedor</option>
-            <option value="INTERFAS">INTERFAS</option>
-            <option value="IPNEXT">IP NEXT</option>
-            <option value="MUNICIPALIDAD">MUNICIPALIDAD</option>
-            <option value="COM">COM</option>
-            <option value="OTRA">Otra (Especificar)</option>
-          </select>
-          <label>Proveedor de Servicio</label>
-        </div>
-        <div class="input-field detalle-proveedor-switch" style="display: none;">
-          <input type="text" id="detalleProveedorSwitch">
-          <label for="detalleProveedorSwitch">Detalle del Proveedor (si es 'Otra')</label>
-        </div>
-
-        <div class="input-field">
-          <textarea id="obsSwitch" class="materialize-textarea"></textarea>
-          <label for="obsSwitch">Observaciones de la Actualización</label>
-        </div>
-
-        <button type="submit" class="btn waves-effect waves-light"
-                    style="background-color: var(--color-instalacion);">Actualizar datos
-                </button>
-      </form>
-    </div>
-  </div>
+ c
 
   <div id="informes-page" class="page-content">
     <div><img src="https://nw.mercedes.gob.ar/img/logo.svg" alt="icono" class="icono-izq"></div>
@@ -984,7 +926,7 @@ if (fetchDetails && selectedId && detalles[selectedId]) {
                 }).registrarConectividadTablero(data);
             });
 
-            // 5. REGISTRAR SWITCH (NUEVO)
+            // 5. REGISTRAR SWITCH
             handleProveedorChange('proveedorConectividadSwitch', '.detalle-proveedor-switch');
 
             document.getElementById('form-switch').addEventListener('submit', e => {
@@ -1001,14 +943,6 @@ if (fetchDetails && selectedId && detalles[selectedId]) {
                 if (!id) {
                     M.toast({
                         html: 'Debe seleccionar un Tablero.'
-                    });
-                    btn.disabled = false;
-                    return;
-                }
-
-                if (!switchName) {
-                    M.toast({
-                        html: 'El campo Switch es obligatorio.'
                     });
                     btn.disabled = false;
                     return;

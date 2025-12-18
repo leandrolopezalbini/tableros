@@ -52,13 +52,16 @@ const FULL_ACCESS = ['leandrolopezalbini@gmail.com', 'valentin2000cm@gmail.com',
 
 // ================== MENU / DOGET ==================
 
-/** Crea el menú personalizado al abrir la hoja. */
+/** Crea los menús personalizados al abrir la hoja. */
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('Tableros')
     .addItem('Panel Tableros', 'abrirPanelTablerosModal')
+    .addSeparator()
+    .addItem('Activar trigger onEdit', 'crearTriggerOnEdit')
     .addToUi();
 }
+
 
 /** Mantiene esta función para cargar la WebApp dentro del Sheet */
 function abrirPanelTablerosModal() {
@@ -251,38 +254,40 @@ function usuarioTienePermiso(accion, email) {
 // ================== BITÁCORA / HISTORIAL / onEdit ==================
 
 /** Registra accesos generales al panel. */
+
 function registrarAccesoUsuario(seccion) {
   try {
     const hoja = obtenerHoja(HOJA.HISTORIAL);
+    // Captura el usuario activo (propietario o dominio)
     const usuario = Session.getActiveUser().getEmail() || "Desconocido";
-    const detalle = `Ingreso a sección: ${seccion}`;
+    const detalle = `Acceso desde APP: ${seccion}`;
     hoja.appendRow(["-", ESTADO.ACCESO, "-", new Date(), detalle, usuario]);
   } catch (err) {
     Logger.log("Error al registrar acceso: " + err);
   }
 }
 
-/** * Registra un evento en la hoja de historial. */
-function registrarHistorial(tipo, idTablero, nuevoValor, detalle, usuarioEmail, campo) {
+/** Registra un evento en la hoja de historial. */
+function registrarHistorial(tipo, idTablero, nuevoValor, detalle, usuarioEmail) {
   try {
     const sheet = obtenerHoja(HOJA.HISTORIAL);
-    const email = usuarioEmail || usuarioActivo() || 'Desconocido';
+    // Prioriza el email pasado, si no usa el activo
+    const email = usuarioEmail || Session.getActiveUser().getEmail() || 'Desconocido';
     const fecha = new Date();
 
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([CAMPOS.NOMBRE, 'Tipo', CAMPOS.ESTADO, 'FechaHora', 'Detalle', 'Email']);
     }
     sheet.appendRow([idTablero, tipo, nuevoValor, fecha, detalle, email]);
-
   } catch (e) {
     Logger.log("Error registrarHistorial: " + e);
   }
 }
 
+
 /** Registra modificaciones manuales en la hoja HOJA.TABLEROS. */
 function onEdit(e) {
-  // 1. Validaciones iniciales
-  if (!e.range || e.range.getRow() === 1 || !e.user || !e.value) return;
+  if (!e.range || e.range.getRow() === 1 || !e.value) return;
   const hojaEditada = e.range.getSheet();
   if (hojaEditada.getName() !== HOJA.TABLEROS) return;
 
@@ -298,7 +303,6 @@ function onEdit(e) {
 
   const nombreColumna = encabezados[columna - 1] || `Columna ${columna}`;
 
-  // 2. Identificar el Tablero (por columna 'Nombre')
   let idxNombre;
   try {
     idxNombre = getHeaderIndex(encabezados, CAMPOS.NOMBRE);
@@ -308,7 +312,6 @@ function onEdit(e) {
   }
   const nombreTablero = hojaEditada.getRange(fila, idxNombre + 1).getValue();
 
-  // 3. Obtener el estado actual
   let estadoActual = 'N/A';
   try {
     const idxEstado = getHeaderIndex(encabezados, CAMPOS.ESTADO);
@@ -316,17 +319,44 @@ function onEdit(e) {
   } catch (err) {
     Logger.log("Advertencia: Columna 'Estado' no encontrada para onEdit.");
   }
-
   if (nombreColumna.toUpperCase() === CAMPOS.ESTADO.toUpperCase()) {
     estadoActual = nuevoValor;
   }
 
-  // 4. Detalle del Registro
-  const detalle = `Modificación manual: ${nombreColumna}. Ant: "${valorAnterior || 'Vacío'}". Nuevo: "${nuevoValor}".`;
+  // Captura el usuario del trigger instalable si existe
+  const usuarioEmail = e.user ? e.user.getEmail() : "Desconocido";
+  const detalle = `Edición MANUAL: ${nombreColumna}. Ant: "${valorAnterior || 'Vacío'}". Nuevo: "${nuevoValor}".`;
 
-  // 5. Llamada a registrarHistorial
-  registrarHistorial('Edición Manual', nombreTablero, estadoActual, detalle, e.user.getEmail(), nombreColumna);
+  registrarHistorial('Edición Manual', nombreTablero, estadoActual, detalle, usuarioEmail, nombreColumna);
 }
+
+/** Crear el trigger instalable para onEdit */
+function crearTriggerOnEdit() {
+  ScriptApp.newTrigger('onEdit')
+    .forSpreadsheet(SpreadsheetApp.getActive())
+    .onEdit()
+    .create();
+}
+
+/** Listar triggers instalados */
+function listarTriggers() {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => {
+    Logger.log(`Trigger: ${t.getHandlerFunction()} - Tipo: ${t.getEventType()}`);
+  });
+}
+
+/** Borrar triggers duplicados de onEdit */
+function borrarTriggersOnEdit() {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => {
+    if (t.getHandlerFunction() === 'onEdit') {
+      ScriptApp.deleteTrigger(t);
+      Logger.log("Trigger onEdit eliminado.");
+    }
+  });
+}
+
 
 // ================== PROCESOS: NUEVO TABLERO ==================
 
@@ -419,7 +449,6 @@ function crearNuevoTablero(data) {
     return { success: false, message: e.message };
   }
 }
-
 
 // ================== PROCESOS: INSTALACIÓN ==================
 
@@ -561,7 +590,7 @@ function vincularSwitchTablero(data) {
     if (idxProveedor !== -1) hoja.getRange(filaIndex, idxProveedor + 1).setValue(proveedorFinal);
     if (idxFechaSwitch !== -1) hoja.getRange(filaIndex, idxFechaSwitch + 1).setValue(fechaActual);
 
-    // 2. Establecer estado de CONECTIVIDAD a CONECTADA (YA ESTÁ CORRECTO)
+    // 2. Establecer estado de CONECTIVIDAD a CONECTADA
     if (idxConectividad !== -1) {
       hoja.getRange(filaIndex, idxConectividad + 1).setValue(ESTADO.CONECTADA);
     }
