@@ -25,7 +25,7 @@ const CAMPOS = {
   ESTADO: 'Estado',
   ENERGIA: 'Energia',
   CONECTIVIDAD: 'Conectividad',
-  PROVEEDOR: 'Proveedor', // Usado para conectividad/Switch
+  PROVEEDOR: 'Proveedor', // Usa /Switch
   TIPO: 'Tipo', // Usado para conectividad/Switch
   DIRECCION: 'Direccion',
   OBSERVACIONES: 'Observaciones',
@@ -41,13 +41,27 @@ const CAMPOS = {
 const PREFIJO_ID = "NSDS-";
 
 // Permisos: editar según tu organización
+
 const PERMISSIONS = {
   PEDIDO: ['mauri@mm.com', 'lean@mm.com', 'valen@mm.com'],
-  INSTALACION: ['marce@mm.com', 'valen@mm.com'],
-  ENERGIA: ['valentin2000cm@gmail.com', 'german@mm.com'],
-  CONECTIVIDAD: ['valentin2000cm@gmail.com', 'marce@mm.com']
+  INSTALACION: ['pollolopeza@gmail.com', 'valen@mm.com'],
+  ENERGIA: ['valentin2000cm@gmail.com', 'pollolopeza@gmail.com'],
+  CONECTIVIDAD: ['valentin2000cm@gmail.com', 'pollolopeza@gmail.com'],
+  SWITCH: ['leandrolopezalbini@gmail.com', 'valentin2000cm@gmail.com'],
+  INFORMES: ['leandrolopezalbini@gmail.com', 'valentin2000cm@gmail.com'],
+  MAPA: ['leandrolopezalbini@gmail.com']
 };
+
 const FULL_ACCESS = ['leandrolopezalbini@gmail.com', 'valentin2000cm@gmail.com', 'mauricioteodorotabarez@gmail.com'];
+
+
+
+const MAILS_ESTADO = { 
+  INSTALADO: ["pollolopeza@gmail.com"], 
+  CONECTADA: ["leandrolopezalbini@gmail.com"], 
+  PENDIENTE: ["leandrolopezalbini@gmail.com", "pollolopeza@gmail.com"],
+  PEDIDO: ["pollolopeza@gmail.com"]
+};
 
 
 // ================== MENU / DOGET ==================
@@ -92,6 +106,28 @@ function getWebAppBaseUrl() {
   return ScriptApp.getWebAppUrl();
 }
 
+function enviarMailCambioEstado(idTablero, estado, detalle, usuarioEmail) {
+  const destinatarios = MAILS_ESTADO[estado];
+  if (!destinatarios || destinatarios.length === 0) {
+    Logger.log("No hay correo configurado para estado: " + estado);
+    return;
+  }
+
+  const asunto = `Tablero ${idTablero} cambiado a ${estado}`;
+  const cuerpo = `
+    El tablero con ID ${idTablero} cambió su estado a: ${estado}.
+    
+    Detalle: ${detalle}
+    
+    Usuario que realizó la modificación: ${usuarioEmail || 'Desconocido'}
+    
+    Fecha: ${new Date()}
+  `;
+
+  destinatarios.forEach(dest => {
+    MailApp.sendEmail(dest, asunto, cuerpo);
+  });
+}
 
 // ================== UTILIDADES HOJAS Y DATOS ==================
 
@@ -267,23 +303,24 @@ function registrarAccesoUsuario(seccion) {
   }
 }
 
-/** Registra un evento en la hoja de historial. */
-function registrarHistorial(tipo, idTablero, nuevoValor, detalle, usuarioEmail) {
+// ================== HISTORIAL ==================
+
+function registrarHistorial(tipo, idTablero, nuevoValor, detalle, usuarioEmail, columnaAfectada) {
   try {
     const sheet = obtenerHoja(HOJA.HISTORIAL);
-    // Prioriza el email pasado, si no usa el activo
     const email = usuarioEmail || Session.getActiveUser().getEmail() || 'Desconocido';
     const fecha = new Date();
 
+    // Encabezados si la hoja está vacía
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow([CAMPOS.NOMBRE, 'Tipo', CAMPOS.ESTADO, 'FechaHora', 'Detalle', 'Email']);
+      sheet.appendRow([CAMPOS.NOMBRE, 'Tipo', CAMPOS.ESTADO, 'FechaHora', 'Detalle', 'Email', 'Columna']);
     }
-    sheet.appendRow([idTablero, tipo, nuevoValor, fecha, detalle, email]);
+
+    sheet.appendRow([idTablero, tipo, nuevoValor, fecha, detalle, email, columnaAfectada || '']);
   } catch (e) {
     Logger.log("Error registrarHistorial: " + e);
   }
 }
-
 
 /** Registra modificaciones manuales en la hoja HOJA.TABLEROS. */
 function onEdit(e) {
@@ -357,10 +394,9 @@ function borrarTriggersOnEdit() {
   });
 }
 
-
 // ================== PROCESOS: NUEVO TABLERO ==================
 
-/** Crea una nueva fila en Tableros y Maps, y registra en Historial. */
+/** Crea una nueva fila en Tableros y Maps, registra en Historial y envia el email al que le diga function MAILS_ESTADO. */
 function crearNuevoTablero(data) {
   try {
     const { headers, data: allData, indices } = _getDatosTableros(); // Optimizado
@@ -379,8 +415,8 @@ function crearNuevoTablero(data) {
     const nuevoID = `${PREFIJO_ID}${String(max + 1).padStart(3, '0')}`;
 
     // Coordenadas iniciales PENDIENTES
-    const lat = ESTADO.PENDIENTE;
-    const lng = ESTADO.PENDIENTE;
+    const lat = data.latitud || ESTADO.PENDIENTE;
+    const lng = data.longitud || ESTADO.PENDIENTE;
 
     // Paso 1: Crear la nueva fila en HOJA.TABLEROS
     const nueva = new Array(headers.length).fill('');
@@ -433,16 +469,22 @@ function crearNuevoTablero(data) {
     hojaMaps.appendRow(nuevaFilaMaps);
 
     // Paso 3: Registrar en Historial
+    const detalleHistorial = `Dirección: ${data.direccion} | Coordenadas: ${lat},${lng} | Observaciones: ${data.observaciones || ''}`;
     registrarHistorial(
       ESTADO.CREACION,
       nuevoID,
       ESTADO.PEDIDO,
-      `Dirección: ${data.direccion} | Coordenadas: ${lat},${lng} | Observaciones: ${data.observaciones || ''}`,
+      detalleHistorial,
       usuarioActivo(),
       CAMPOS.ESTADO
     );
 
+    // Paso 4: Enviar mail de aviso
+    enviarMailCambioEstado(nuevoID, ESTADO.PEDIDO, detalleHistorial, usuarioActivo());
+    //Logger.log("Mail enviado al crear tablero: " + nuevoID);
+
     return { success: true, id: nuevoID };
+
 
   } catch (e) {
     Logger.log("Error al crear nuevo tablero: " + e);
@@ -452,7 +494,6 @@ function crearNuevoTablero(data) {
 
 // ================== PROCESOS: INSTALACIÓN ==================
 
-/** Registra la instalación física de un tablero, actualizando coordenadas. */
 function registrarInstalacionTablero(datos) {
   try {
     const usuario = usuarioActivo();
@@ -482,11 +523,13 @@ function registrarInstalacionTablero(datos) {
 
     // Anexar observaciones
     if (idxObs !== -1) {
-      const obsExistentes = (hoja.getRange(filaIndex, idxObs + 1).getValue() || '').trim();
-      hoja.getRange(filaIndex, idxObs + 1).setValue(`${obsExistentes}\n[INSTALACION] Coordenadas: ${latitud},${longitud}. ${datos.observaciones || ''}`);
-    }
+    const obsExistentes = (hoja.getRange(filaIndex, idxObs + 1).getValue() || '').trim();
+    const nuevaObs = `[INSTALACION] Coordenadas: ${latitud},${longitud}. ${datos.observaciones || ''}`;
+    hoja.getRange(filaIndex, idxObs + 1).setValue(obsExistentes ? obsExistentes + "\n" + nuevaObs : nuevaObs);
+  }
 
-    // 3. ACTUALIZAR COORDENADAS EN HOJA.MAPS
+
+   // 3. ACTUALIZAR COORDENADAS EN HOJA.MAPS
     const hojaMaps = obtenerHoja(HOJA.MAPS);
     const headersMaps = getHeaders(hojaMaps);
     const filaMaps = findRowByColValue(hojaMaps, CAMPOS.NOMBRE, datos.id);
@@ -505,6 +548,8 @@ function registrarInstalacionTablero(datos) {
     // 4. REGISTRAR EN HISTORIAL
     const detalleHistorial = `Instalación completada. Coordenadas: ${latitud},${longitud}. Obs: ${datos.observaciones || ''}`;
     registrarHistorial('Instalación', datos.id, ESTADO.INSTALADO, detalleHistorial, usuario, CAMPOS.ESTADO);
+
+    enviarMailCambioEstado(datos.id, ESTADO.INSTALADO, detalleHistorial, usuario);
 
     return { success: true };
   } catch (e) {
@@ -539,9 +584,10 @@ function registrarEnergiaTablero(datos) {
     hoja.getRange(fila, idxEnergia + 1).setValue(ESTADO.CONECTADA);
 
     // Anexar observaciones
-    if (datos.observaciones) {
+    if (datos.observaciones && idxObs !== -1) {
       const obsExistentes = (hoja.getRange(fila, idxObs + 1).getValue() || '').trim();
-      hoja.getRange(fila, idxObs + 1).setValue(`${obsExistentes}\n[ENERGIA] ${datos.observaciones || ''}`);
+      const nuevaObs = `[ENERGIA] ${datos.observaciones}`;
+      hoja.getRange(fila, idxObs + 1).setValue(obsExistentes ? obsExistentes + "\n" + nuevaObs : nuevaObs);
     }
 
     const detalleHistorial = `Proveedor:${proveedorFinal} | Obs:${datos.observaciones || ""}`;
@@ -557,7 +603,6 @@ function registrarEnergiaTablero(datos) {
 
 // ================== PROCESOS: SWITCH (CONECTIVIDAD COMPLETA) ==================
 
-
 /**
  * Vincula el nombre del Switch y actualiza los campos de conectividad.
  * Incluye la actualización del estado de CONECTIVIDAD a 'CONECTADA'.
@@ -570,42 +615,29 @@ function vincularSwitchTablero(data) {
     const headers = getHeaders(hoja);
 
     const idxSwitch = getHeaderIndex(headers, CAMPOS.SWITCH);
-    const idxProveedor = getHeaderIndex(headers, CAMPOS.PROVEEDOR);
-    const idxTipo = getHeaderIndex(headers, CAMPOS.TIPO);
     const idxFechaSwitch = getHeaderIndex(headers, CAMPOS.FECHA_SWITCH);
     const idxObs = getHeaderIndex(headers, CAMPOS.OBSERVACIONES);
-
-    // ÍNDICE CRÍTICO: Para establecer el estado de CONECTIVIDAD
-    const idxConectividad = getHeaderIndex(headers, CAMPOS.CONECTIVIDAD);
 
     const filaIndex = findRowByColValue(hoja, CAMPOS.NOMBRE, data.id);
     if (filaIndex === -1) throw new Error(`Tablero ID ${data.id} no encontrado.`);
 
     const fechaActual = new Date();
-    const proveedorFinal = data.proveedor === 'OTRA' ? data.detalleProveedor : data.proveedor;
 
-    // 1. Escribir los datos del Switch y Conectividad
+    // Actualizar solo el Switch y la fecha
     if (idxSwitch !== -1) hoja.getRange(filaIndex, idxSwitch + 1).setValue(data.switch);
-    if (idxTipo !== -1) hoja.getRange(filaIndex, idxTipo + 1).setValue(data.tipo);
-    if (idxProveedor !== -1) hoja.getRange(filaIndex, idxProveedor + 1).setValue(proveedorFinal);
     if (idxFechaSwitch !== -1) hoja.getRange(filaIndex, idxFechaSwitch + 1).setValue(fechaActual);
 
-    // 2. Establecer estado de CONECTIVIDAD a CONECTADA
-    if (idxConectividad !== -1) {
-      hoja.getRange(filaIndex, idxConectividad + 1).setValue(ESTADO.CONECTADA);
-    }
-
-    // 3. Añadir observación
+    // Añadir observación
     if (idxObs !== -1) {
       let obsExistente = (hoja.getRange(filaIndex, idxObs + 1).getValue() || '').toString().trim();
-      let nuevaObs = `[Switch/${data.tipo}] ${data.switch} con ${proveedorFinal}. Obs: ${data.observaciones || ''} (${fechaActual.toLocaleDateString()})`;
+      let nuevaObs = `[Switch] ${data.switch} agregado. Obs: ${data.observaciones || ''} (${fechaActual.toLocaleDateString()})`;
       let obsFinal = obsExistente + (obsExistente ? '\n' : '') + nuevaObs;
       hoja.getRange(filaIndex, idxObs + 1).setValue(obsFinal);
     }
 
     // 4. Registrar en Historial
-    const detalleHistorial = `Switch: ${data.switch}, Tipo: ${data.tipo}, Proveedor: ${proveedorFinal}. Obs: ${data.observaciones || ''}`;
-    registrarHistorial('Switch', data.id, ESTADO.CONECTADA, detalleHistorial, usuarioActivo(), CAMPOS.SWITCH);
+    const detalleHistorial = `Switch: ${data.switch}. Obs: ${data.observaciones || ''}`;
+    registrarHistorial('Switch', data.id, 'SWITCH_AGREGADO', detalleHistorial, usuarioActivo(), CAMPOS.SWITCH);
 
 
     return { success: true, id: data.id };
@@ -639,19 +671,20 @@ function registrarConectividadTablero(datos) {
     if (!fila || fila === -1) return { success: false, message: "Tablero no encontrado" };
 
     const conectActual = (hoja.getRange(fila, idxConectividad + 1).getValue() || '').toString().trim().toUpperCase();
-    if (conectActual === ESTADO.CONECTADA) return { success: false, message: "La Conectividad ya está CONECTADA" };
+    // Permitir actualizar incluso si ya está conectada
 
     let proveedorFinal = datos.proveedor === "OTRA" ? datos.detalleProveedor : datos.proveedor;
 
     // Actualizar campos
     if (idxProveedor !== -1) hoja.getRange(fila, idxProveedor + 1).setValue(proveedorFinal);
     if (idxTipo !== -1) hoja.getRange(fila, idxTipo + 1).setValue(datos.tipo);
-    if (idxConectividad !== -1) hoja.getRange(fila, idxConectividad + 1).setValue(ESTADO.CONECTADA);
+    if (conectActual !== ESTADO.CONECTADA && idxConectividad !== -1) hoja.getRange(fila, idxConectividad + 1).setValue(ESTADO.CONECTADA);
 
     // Anexar observaciones
     if (datos.observaciones && idxObs !== -1) {
       const obsExistentes = (hoja.getRange(fila, idxObs + 1).getValue() || '').trim();
-      hoja.getRange(fila, idxObs + 1).setValue(`${obsExistentes}\n[CONECTIVIDAD] ${datos.observaciones || ''}`);
+      const nuevaObs = `[CONECTIVIDAD] ${datos.observaciones}`;
+      hoja.getRange(fila, idxObs + 1).setValue(obsExistentes ? obsExistentes + "\n" + nuevaObs : nuevaObs);
     }
 
     const detalleHistorial = `Proveedor: ${proveedorFinal} | Tipo: ${datos.tipo} | Obs: ${datos.observaciones || ""}`;
@@ -670,8 +703,6 @@ function registrarConectividadTablero(datos) {
  * Función de utilidad para filtrar y mapear datos de tableros.
  * @param {Function} filtroFn - Función que recibe (row, indices) y retorna boolean.
  * @returns {Array<Object>} Lista de tableros filtrados.
- */
-/**
  * RE-DEFINICIÓN DE _filtrarTableros para que sea universal
  * Agregamos los campos de conectividad para que no falten en ninguna vista.
  */
@@ -711,11 +742,12 @@ function listarTablerosPedido() {
 function listarTablerosParaEnergia() {
   return _filtrarTableros((row, indices) => {
     const estado = (row[indices[CAMPOS.ESTADO]] || '').toString().toUpperCase();
-    return estado === ESTADO.INSTALADO || estado === ESTADO.CONECTADA;
+    const energia = (row[indices[CAMPOS.ENERGIA]] || '').toString().toUpperCase();
+    return (estado === ESTADO.INSTALADO || estado === ESTADO.CONECTADA) && energia !== ESTADO.CONECTADA;
   });
 }
 
-/** Filtra: Estado = INSTALADO AND Conectividad != CONECTADA */
+/** Filtra: Estado = INSTALADO o CONECTADA AND Conectividad != CONECTADA */
 function listarTablerosParaConectividad() {
   return _filtrarTableros((row, indices) => {
     const estado = (row[indices[CAMPOS.ESTADO]] || '').toString().toUpperCase();
@@ -724,12 +756,11 @@ function listarTablerosParaConectividad() {
 }
 
 /** Retorna tableros listos para recibir un Switch.  */
-/** Filtra: Estado = INSTALADO o CONECTADA para el formulario de Switch */
+/** Filtra: Estado = INSTALADO o CONECTADA AND Conectividad != CONECTADA para el formulario de Switch */
 function listarTablerosParaSwitch() {
   return _filtrarTableros((row, idx) => {
     const estado = (row[idx[CAMPOS.ESTADO]] || '').toString().trim().toUpperCase();
-    // Permitimos ambos estados para poder vincular o actualizar el switch
-    return estado === ESTADO.INSTALADO || estado === ESTADO.CONECTADA;
+    return estado === ESTADO.INSTALADO;
   });
 }
 
@@ -737,7 +768,7 @@ function listarTablerosParaSwitch() {
 
 /**
  * Función central para obtener, combinar y filtrar los datos de tableros.
- * @param {object} filters - Objeto con filtros (estado, energia, conectividad, direccionContains).
+ * @param {object} filters - Objeto con filtros (estado, energia, conectividad, direccionContains, switchContains).
  * @returns {Array<object>} Lista de tableros filtrados mapeados a objetos.
  */
 function obtenerTablerosFiltrados(filters) {
@@ -792,13 +823,11 @@ function obtenerTablerosFiltrados(filters) {
       const conectividad = (row[indices[CAMPOS.CONECTIVIDAD]] || '').toString().trim().toUpperCase();
       if (conectividad !== filters.conectividad.toString().trim().toUpperCase()) return false;
     }
-    // Filtro de búsqueda por Dirección
+    // Filtro de búsqueda por Dirección o Nombre
     if (filters && filters.direccionContains && filters.direccionContains.toString().trim() !== '') {
       const q = filters.direccionContains.toString().trim().toUpperCase();
       const nombre = (row[indices[CAMPOS.NOMBRE]] || '').toString().toUpperCase();
       const direccion = (row[indices[CAMPOS.DIRECCION]] || '').toString().toUpperCase();
-
-      // Busca por Nombre O por Dirección
       if (direccion.indexOf(q) === -1 && nombre.indexOf(q) === -1) return false;
     }
     return true;
@@ -813,7 +842,8 @@ function obtenerTablerosFiltrados(filters) {
     conectividad: r[indices[CAMPOS.CONECTIVIDAD]] || '',
     proveedor: (indices[CAMPOS.PROVEEDOR] !== -1 ? r[indices[CAMPOS.PROVEEDOR]] : '') || '',
     tipo: (indices[CAMPOS.TIPO] !== -1 ? r[indices[CAMPOS.TIPO]] : '') || '',
-    marcado: r[indices[CAMPOS.MARCADO]] || ''
+    marcado: r[indices[CAMPOS.MARCADO]] || '',
+    switch: (indices[CAMPOS.SWITCH] !== -1 ? r[indices[CAMPOS.SWITCH]] : '') || ''
   }));
 }
 
@@ -868,7 +898,7 @@ function generarInformePDF(filters) {
     const pdf = blob.getAs('application/pdf').setName(`Informe_Tablero_${Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss')}.pdf`);
 
     registrarHistorial('Descarga Informe', 'TODAS', 'INFORME', `Informe generado`, usuario, 'Informe');
-
+    
     // Devuelve el PDF codificado en Base64 para que el cliente (HTML) lo descargue
     return Utilities.base64Encode(pdf.getBytes());
   } catch (e) {
