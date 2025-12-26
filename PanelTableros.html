@@ -57,7 +57,7 @@
       display: grid;
       gap: 25px;
       margin: 20px auto;
-      max-width: 100vh;
+      max-width: 100%;
       grid-template-columns: repeat(2, 1fr);
     }
 
@@ -152,8 +152,25 @@
       position: fixed !important;
       top: 10px !important;
       right: 10px !important;
-      opacity: 0.8 !important;
-      font-size: 0.9em !important;
+      opacity: 0.9 !important;
+      font-size: 1em !important;
+      z-index: 1000 !important;
+    }
+
+    @media (max-width: 600px) {
+      .toast-custom {
+        top: 20px !important;
+        left: 10px !important;
+        right: 10px !important;
+        font-size: 1.2em !important;
+        text-align: center !important;
+      }
+
+      /* Ajustes para radio buttons en móviles */
+      .input-field div[style*="display: flex"] {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
     }
 
     /* ================== SISTEMA DE REJILLA SIMPLE (REEMPLAZANDO COL) ================== */
@@ -177,6 +194,13 @@
         flex-direction: column;
         gap: 0;
       }
+    }
+
+    .h1 {
+      text-align: center;
+      color: var(--azul-principal);
+      margin-bottom: 10px;
+      font-size: 3.5rem;
     }
 
     .btn-volver {
@@ -213,6 +237,24 @@
       padding: 8px;
       text-align: left;
       font-size: 0.9rem;
+    }
+
+    .resultado-item {
+      background-color: var(--blanco);
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .resultado-item p {
+      margin: 5px 0;
+      font-size: 1rem;
+    }
+
+    .resultado-item strong {
+      color: var(--azul-principal);
     }
 
     /* Clases de estado (para Materialize en el HTML) */
@@ -281,12 +323,17 @@
         </div>
 
         <div class="input-field">
-          <select id="marcado_select" required>
-            <option value="" disabled selected>¿Está marcado en el lugar?</option>
-            <option value="SI">SI</option>
-            <option value="NO">NO (Detallar en Observaciones)</option>
-          </select>
-          <label>Estado de Marcado</label>
+          <p style="margin-bottom: 10px;">¿Está marcado en el lugar?</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <label>
+              <input type="radio" name="marcado" value="SI" required>
+              <span>SÍ</span>
+            </label>
+            <label>
+              <input type="radio" name="marcado" value="NO" required>
+              <span>NO (Detallar en Observaciones)</span>
+            </label>
+          </div>
         </div>
 
         <div class="input-field">
@@ -294,7 +341,26 @@
           <label for="observaciones">Observaciones</label>
         </div>
 
-        <button type="submit" class="btn waves-effect waves-light" style="background-color: var(--azul-principal);">
+        <div class="grid-campos-dobles">
+          <div class="input-field">
+            <input type="text" id="nuevoLatitud" placeholder="Latitud">
+            <label for="nuevoLatitud">Latitud (opcional)</label>
+          </div>
+          <div class="input-field">
+            <input type="text" id="nuevoLongitud" placeholder="Longitud">
+            <label for="nuevoLongitud">Longitud (opcional)</label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col s12">
+            <button type="button" id="btnObtenerUbicacionNuevo" class="btn waves-effect waves-light blue darken-1">
+              <i class="material-icons left">location_on</i> Obtener Coordenadas
+            </button>
+            <span id="ubicacionStatusNuevo" style="margin-left: 10px; font-style: italic;"></span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn waves-effect waves-light" style="background-color: var(--color-nuevo);">
           Crear Tablero (Estado: PEDIDO)
         </button>
       </form>
@@ -356,12 +422,11 @@
         <input type="hidden" id="tableroEnergiaId">
 
         <div class="input-field">
-          <select id="proveedorEnergia" required>
-            <option value="" disabled selected>Seleccione el Proveedor</option>
-            <option value="EDEN">EDEN</option>
-            <option value="OTRA">Otra (Especificar)</option>
-          </select>
-          <label>Proveedor de Energía</label>
+          <p>Proveedor de Energía</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <label><input type="radio" name="proveedorEnergia" value="EDEN" required> <span>EDEN</span></label>
+            <label><input type="radio" name="proveedorEnergia" value="OTRA" required> <span>OTRA</span></label>
+          </div>
         </div>
         <div class="input-field detalle-proveedor-energia" style="display: none;">
           <input type="text" id="detalleProveedorEnergia">
@@ -398,26 +463,24 @@
         </div>
 
         <div class="input-field">
-          <select id="tipoConectividad" required>
-            <option value="" disabled selected>Seleccione el Tipo</option>
-            <option value="FIBRA OPTICA">FIBRA OPTICA</option>
-            <option value="AIRE">AIRE</option>
-            <option value="CASCADA">CASCADA</option>
-            <option value="OTRO">Otro</option>
-          </select>
-          <label>Tipo de Conectividad</label>
+          <p>Tipo de Conectividad</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <label><input type="radio" name="tipoConectividad" value="FIBRA OPTICA" required> <span>FIBRA OPTICA</span></label>
+            <label><input type="radio" name="tipoConectividad" value="AIRE" required> <span>AIRE</span></label>
+            <label><input type="radio" name="tipoConectividad" value="CASCADA" required> <span>CASCADA</span></label>
+            <label><input type="radio" name="tipoConectividad" value="OTRO" required> <span>OTRO</span></label>
+          </div>
         </div>
 
         <div class="input-field">
-          <select id="proveedorConectividad" required>
-            <option value="" disabled selected>Seleccione el Proveedor</option>
-            <option value="INTERFAS">INTERFAS</option>
-            <option value="IPNEXT">IPNEXT</option>
-            <option value="MUNICIPALIDAD">MUNICIPALIDAD</option>
-            <option value="COM">COM</option>
-            <option value="OTRA">Otra (Especificar)</option>
-          </select>
-          <label>Proveedor de Servicio</label>
+          <p>Proveedor de Servicio</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <label><input type="radio" name="proveedorConectividad" value="INTERFAS" required> <span>INTERFAS</span></label>
+            <label><input type="radio" name="proveedorConectividad" value="IPNEXT" required> <span>IPNEXT</span></label>
+            <label><input type="radio" name="proveedorConectividad" value="MUNICIPALIDAD" required> <span>MUNICIPALIDAD</span></label>
+            <label><input type="radio" name="proveedorConectividad" value="COM" required> <span>COM</span></label>
+            <label><input type="radio" name="proveedorConectividad" value="OTRA" required> <span>OTRA</span></label>
+          </div>
         </div>
 
         <div class="input-field detalle-proveedor-conectividad" style="display: none;">
@@ -430,8 +493,8 @@
           <label for="obsConectividad">Observaciones</label>
         </div>
 
-        <button type="submit" class="btn waves-effect waves-light green darken-2">
-          Registrar (Cambiar Conectividad a CONECTADA)
+        <button type="submit" class="btn tarjeta-conectividad">
+          Registrar (Cambiar a CONECTADA)
         </button>
       </form>
     </div>
@@ -475,31 +538,31 @@
       <form id="form-filtros">
         <div class="row">
           <div class="input-field col s12 m6">
-            <select id="filtroEstado">
-              <option value="">Cualquier Estado</option>
-              <option value="PEDIDO">PEDIDO</option>
-              <option value="INSTALADO">INSTALADO</option>
-            </select>
-            <label>Filtrar por Estado</label>
+            <p>Filtrar por Estado</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+              <label><input type="radio" name="filtroEstado" value="" checked> <span>Cualquier Estado</span></label>
+              <label><input type="radio" name="filtroEstado" value="PEDIDO"> <span>PEDIDO</span></label>
+              <label><input type="radio" name="filtroEstado" value="INSTALADO"> <span>INSTALADO</span></label>
+            </div>
           </div>
           <div class="input-field col s12 m6">
-            <select id="filtroEnergia">
-              <option value="">Cualquier Energía</option>
-              <option value="PENDIENTE">PENDIENTE</option>
-              <option value="CONECTADA">CONECTADA</option>
-            </select>
-            <label>Filtrar por Energía</label>
+            <p>Filtrar por Energía</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+              <label><input type="radio" name="filtroEnergia" value="" checked> <span>Cualquier Energía</span></label>
+              <label><input type="radio" name="filtroEnergia" value="PENDIENTE"> <span>PENDIENTE</span></label>
+              <label><input type="radio" name="filtroEnergia" value="CONECTADA"> <span>CONECTADA</span></label>
+            </div>
           </div>
         </div>
 
         <div class="row">
           <div class="input-field col s12 m6">
-            <select id="filtroConectividad">
-              <option value="">Cualquier Conectividad</option>
-              <option value="PENDIENTE">PENDIENTE</option>
-              <option value="CONECTADA">CONECTADA</option>
-            </select>
-            <label>Filtrar por Conectividad</label>
+            <p>Filtrar por Conectividad</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+              <label><input type="radio" name="filtroConectividad" value="" checked> <span>Cualquier Conectividad</span></label>
+              <label><input type="radio" name="filtroConectividad" value="PENDIENTE"> <span>PENDIENTE</span></label>
+              <label><input type="radio" name="filtroConectividad" value="CONECTADA"> <span>CONECTADA</span></label>
+            </div>
           </div>
           <div class="input-field col s12 m6">
             <input type="text" id="filtroDireccion" placeholder="Escriba parte de la dirección">
@@ -585,26 +648,24 @@
                 if (fetchDetails && selectedId && detalles[selectedId]) {
                   const tablero = detalles[selectedId];
                   if (inputId === 'autocompleteConectividad') {
-                    const tipoSel = document.getElementById('tipoConectividad');
-                    if (tipoSel) {
-                      tipoSel.value = (tablero.tipoConectividad || '').toUpperCase();
-                      M.FormSelect.init(tipoSel);
-                    }
-                    const provSel = document.getElementById('proveedorConectividad');
+                    const tipoRadio = document.querySelector('input[name="tipoConectividad"][value="' + (tablero.tipoConectividad || '').toUpperCase() + '"]');
+                    if (tipoRadio) tipoRadio.checked = true;
+                    const provRadios = document.querySelectorAll('input[name="proveedorConectividad"]');
                     const inputDetalle = document.getElementById('detalleProveedorConectividad');
                     const divDetalle = document.querySelector('.detalle-proveedor-conectividad');
-                    if (provSel) {
-                      const provPlanilla = (tablero.proveedorConectividad || '').toUpperCase();
-                      const existeOpcion = Array.from(provSel.options).some(opt => opt.value === provPlanilla);
-                      if (existeOpcion) {
-                        provSel.value = provPlanilla;
+                    const provPlanilla = (tablero.proveedorConectividad || '').toUpperCase();
+                    const radioOtra = document.querySelector('input[name="proveedorConectividad"][value="OTRA"]');
+                    if (provRadios) {
+                      provRadios.forEach(r => r.checked = false);
+                      const matchingRadio = Array.from(provRadios).find(r => r.value === provPlanilla);
+                      if (matchingRadio) {
+                        matchingRadio.checked = true;
                         if (divDetalle) divDetalle.style.display = 'none';
                       } else if (provPlanilla !== "") {
-                        provSel.value = "OTRA";
+                        if (radioOtra) radioOtra.checked = true;
                         if (inputDetalle) inputDetalle.value = provPlanilla;
                         if (divDetalle) divDetalle.style.display = 'block';
                       }
-                      M.FormSelect.init(provSel);
                     }
                     M.updateTextFields();
                     M.toast({ html: 'Datos cargados', classes: 'blue' });
@@ -616,23 +677,24 @@
       };
 
       // --- Cambio de proveedor ---
-      function handleProveedorChange(selectId, detailSelector) {
-        const selectElement = document.getElementById(selectId);
-        if (!selectElement) return;
-        selectElement.addEventListener('change', function () {
-          const detailDiv = document.querySelector(detailSelector);
-          const detailInput = detailDiv.querySelector('input');
-          if (this.value === 'OTRA') {
-            detailDiv.style.display = 'block';
-            if (detailInput) detailInput.setAttribute('required', 'true');
-          } else {
-            detailDiv.style.display = 'none';
-            if (detailInput) {
-              detailInput.value = '';
-              detailInput.removeAttribute('required');
+      function handleProveedorChange(radioName, detailSelector) {
+        const radios = document.querySelectorAll('input[name="' + radioName + '"]');
+        radios.forEach(radio => {
+          radio.addEventListener('change', function () {
+            const detailDiv = document.querySelector(detailSelector);
+            const detailInput = detailDiv.querySelector('input');
+            if (this.value === 'OTRA') {
+              detailDiv.style.display = 'block';
+              if (detailInput) detailInput.setAttribute('required', 'true');
+            } else {
+              detailDiv.style.display = 'none';
+              if (detailInput) {
+                detailInput.value = '';
+                detailInput.removeAttribute('required');
+              }
             }
-          }
-          M.updateTextFields();
+            M.updateTextFields();
+          });
         });
       }
 
@@ -696,15 +758,65 @@
               const btn = e.submitter; btn.disabled = true;
               const data = {
                 direccion: document.getElementById('direccion').value,
-                marcado: document.getElementById('marcado_select').value,
-                observaciones: document.getElementById('observaciones').value
+                marcado: document.querySelector('input[name="marcado"]:checked').value,
+                observaciones: document.getElementById('observaciones').value,
+                latitud: document.getElementById('nuevoLatitud').value || 'PENDIENTE',
+                longitud: document.getElementById('nuevoLongitud').value || 'PENDIENTE'
               };
               SCRIPT_RUN.withSuccessHandler(res => {
-                M.toast({ html: res.success ? `Tablero ${res.id} creado.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1' : 'red darken-3' });
+                M.toast({ html: res.success ? `Tablero ${res.id} creado.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1 toast-custom' : 'red darken-3 toast-custom' });
                 formNuevo.reset(); M.updateTextFields(); btn.disabled = false;
               }).crearNuevoTablero(data);
             });
             formNuevo._listenerAdded = true;
+          }
+          document.getElementById('nuevoLatitud').value = '';
+          document.getElementById('nuevoLongitud').value = '';
+          const statusSpanNuevo = document.getElementById('ubicacionStatusNuevo'); if (statusSpanNuevo) statusSpanNuevo.textContent = '';
+          M.updateTextFields();
+          const btnUbicacionNuevo = document.getElementById('btnObtenerUbicacionNuevo');
+          if (btnUbicacionNuevo && !btnUbicacionNuevo._listenerAdded) {
+            const handler = () => {
+              const latInput = document.getElementById('nuevoLatitud');
+              const lngInput = document.getElementById('nuevoLongitud');
+              const statusSpan = document.getElementById('ubicacionStatusNuevo');
+              if (!latInput || !lngInput || !statusSpan) return;
+              latInput.value = ''; lngInput.value = ''; M.updateTextFields();
+              statusSpan.textContent = 'Buscando ubicación...';
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    const lat = position.coords.latitude.toFixed(5);
+                    const lng = position.coords.longitude.toFixed(5);
+                    latInput.value = lat; lngInput.value = lng;
+                    M.updateTextFields();
+                    statusSpan.textContent = 'Ubicación obtenida.';
+                    M.toast({ html: 'Ubicación obtenida.', classes: 'blue toast-custom' });
+                  },
+                  (error) => {
+                    let msg = 'Error de ubicación: ';
+                    switch (error.code) {
+                      case error.PERMISSION_DENIED: msg += "Usuario denegó la solicitud."; break;
+                      case error.POSITION_UNAVAILABLE: msg += "Información de ubicación no disponible."; break;
+                      case error.TIMEOUT:
+                        msg += "Tiempo de espera agotado. Ingrese coordenadas manualmente.";
+                        statusSpan.textContent = 'Ingrese coordenadas manualmente en los campos.';
+                        break;
+                      default: msg += "Error desconocido."; break;
+                    }
+                    console.error("Error Geolocation:", msg, error);
+                    statusSpan.textContent = 'Error al obtener ubicación.';
+                    M.toast({ html: msg, classes: 'red darken-3' });
+                  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+              } else {
+                statusSpan.textContent = 'Geolocalización no soportada.';
+                M.toast({ html: 'Geolocalización no disponible.', classes: 'red darken-3' });
+              }
+            };
+            btnUbicacionNuevo.addEventListener('click', handler);
+            btnUbicacionNuevo.addEventListener('touchstart', handler);
+            btnUbicacionNuevo._listenerAdded = true;
           }
         }
 
@@ -717,7 +829,9 @@
           M.updateTextFields();
           const btnUbicacion = document.getElementById('btnObtenerUbicacion');
           if (btnUbicacion && !btnUbicacion._listenerAdded) {
-            btnUbicacion.addEventListener('click', obtenerUbicacion);
+            const handler = obtenerUbicacion;
+            btnUbicacion.addEventListener('click', handler);
+            btnUbicacion.addEventListener('touchstart', handler);
             btnUbicacion._listenerAdded = true;
           }
           const formInstalacion = document.getElementById('form-instalacion');
@@ -739,7 +853,7 @@
               if (!latitud || !longitud) {
                 M.toast({
                   html: 'Advertencia: Coordenadas vacías. Presione "Obtener Coordenadas" o ingrese manualmente.',
-                  classes: 'orange darken-3'
+                  classes: 'orange darken-3 toast-custom'
                 });
               }
 
@@ -751,7 +865,7 @@
               SCRIPT_RUN.withSuccessHandler(res => {
                 M.toast({
                   html: res.success ? `Tablero ${id} instalado con éxito.` : `Error: ${res.message}`,
-                  classes: res.success ? 'green darken-1' : 'red darken-3'
+                  classes: res.success ? 'green darken-1 toast-custom' : 'red darken-3 toast-custom'
                 });
                 formInstalacion.reset();
                 M.updateTextFields();
@@ -773,7 +887,7 @@
               e.preventDefault();
               const btn = e.submitter; if (btn) btn.disabled = true;
               const id = document.getElementById('tableroEnergiaId')?.value || '';
-              const proveedor = document.getElementById('proveedorEnergia')?.value || '';
+              const proveedor = document.querySelector('input[name="proveedorEnergia"]:checked')?.value || '';
               const detalleProveedor = document.getElementById('detalleProveedorEnergia')?.value || '';
               const data = {
                 id,
@@ -783,7 +897,7 @@
               };
               if (!id) { M.toast({ html: 'Debe seleccionar un Tablero.' }); if (btn) btn.disabled = false; return; }
               SCRIPT_RUN.withSuccessHandler(res => {
-                M.toast({ html: res.success ? `Energía de ${id} CONECTADA.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1' : 'red darken-3' });
+                M.toast({ html: res.success ? `Energía de ${id} CONECTADA.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1 toast-custom' : 'red darken-3 toast-custom' });
                 formEnergia.reset(); M.updateTextFields(); if (btn) btn.disabled = false; showPage('panel');
               }).registrarEnergiaTablero(data);
             });
@@ -801,9 +915,9 @@
               e.preventDefault();
               const btn = e.submitter; if (btn) btn.disabled = true;
               const id = document.getElementById('tableroConectividadId')?.value || '';
-              const proveedor = document.getElementById('proveedorConectividad')?.value || '';
+              const proveedor = document.querySelector('input[name="proveedorConectividad"]:checked')?.value || '';
               const detalleProveedor = document.getElementById('detalleProveedorConectividad')?.value || '';
-              const tipo = document.getElementById('tipoConectividad')?.value || '';
+              const tipo = document.querySelector('input[name="tipoConectividad"]:checked')?.value || '';
               const switchName = document.getElementById('filtroSwitch')?.value || '';
 
               const data = {
@@ -818,88 +932,90 @@
               if (!id) { M.toast({ html: 'Debe seleccionar un Tablero.' }); if (btn) btn.disabled = false; return; }
 
               SCRIPT_RUN.withSuccessHandler(res => {
-                M.toast({ html: res.success ? `Conectividad de ${id} CONECTADA.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1' : 'red darken-3' });
+                M.toast({ html: res.success ? `Conectividad de ${id} CONECTADA.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1 toast-custom' : 'red darken-3 toast-custom' });
                 formCon.reset(); M.updateTextFields(); if (btn) btn.disabled = false; showPage('panel');
               }).registrarConectividadTablero(data);
             });
             formCon._listenerAdded = true;
           }
+        }
 
-          // SWITCH
-          if (pageId === 'switch') {
-            initAutocomplete('autocompleteSwitch', 'tableroSwitchId', 'listarTablerosParaSwitch', false);
-            const formSwitch = document.getElementById('form-switch');
-            if (formSwitch && !formSwitch._listenerAdded) {
-              formSwitch.addEventListener('submit', e => {
-                e.preventDefault();
-                const btn = e.submitter; if (btn) btn.disabled = true;
-                const id = document.getElementById('tableroSwitchId')?.value || '';
-                const switchName = document.getElementById('inputSwitch')?.value || '';
-                const data = {
-                  id,
-                  switch: switchName,
-                  observaciones: document.getElementById('obsSwitch')?.value || ''
-                };
-                if (!id) { M.toast({ html: 'Debe seleccionar un Tablero.' }); if (btn) btn.disabled = false; return; }
-                SCRIPT_RUN.withSuccessHandler(res => {
-                  M.toast({ html: res.success ? `Switch ${switchName} vinculado.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1' : 'red darken-3' });
-                  formSwitch.reset(); M.updateTextFields(); if (btn) btn.disabled = false; showPage('panel');
-                }).vincularSwitchTablero(data);
-              });
-              formSwitch._listenerAdded = true;
-            }
+        // SWITCH
+        if (pageId === 'switch') {
+          initAutocomplete('autocompleteSwitch', 'tableroSwitchId', 'listarTablerosParaSwitch', false);
+          const formSwitch = document.getElementById('form-switch');
+          if (formSwitch && !formSwitch._listenerAdded) {
+            formSwitch.addEventListener('submit', e => {
+              e.preventDefault();
+              const btn = e.submitter; if (btn) btn.disabled = true;
+              const id = document.getElementById('tableroSwitchId')?.value || '';
+              const switchName = document.getElementById('inputSwitch')?.value || '';
+              const data = {
+                id,
+                switch: switchName,
+                observaciones: document.getElementById('obsSwitch')?.value || ''
+              };
+              if (!id) { M.toast({ html: 'Debe seleccionar un Tablero.' }); if (btn) btn.disabled = false; return; }
+              SCRIPT_RUN.withSuccessHandler(res => {
+                M.toast({ html: res.success ? `Switch ${switchName} vinculado.` : `Error: ${res.message}`, classes: res.success ? 'green darken-1 toast-custom' : 'red darken-3 toast-custom' });
+                formSwitch.reset(); M.updateTextFields(); if (btn) btn.disabled = false; showPage('panel');
+              }).vincularSwitchTablero(data);
+            });
+            formSwitch._listenerAdded = true;
+          }
+        }
+
+        // INFORMES
+        if (pageId === 'informes') {
+          const formFiltros = document.getElementById('form-filtros');
+          if (formFiltros && !formFiltros._listenerAdded) {
+            formFiltros.addEventListener('submit', e => {
+              e.preventDefault();
+              const filtros = {
+                estado: document.querySelector('input[name="filtroEstado"]:checked').value || '',
+                energia: document.querySelector('input[name="filtroEnergia"]:checked').value || '',
+                conectividad: document.querySelector('input[name="filtroConectividad"]:checked').value || '',
+                direccionContains: document.getElementById('filtroDireccion').value || ''
+              }; // 👈 cierre correcto del objeto
+
+              SCRIPT_RUN.withSuccessHandler(generarTablaVistaPrevia).listarTablerosFiltrados(filtros);
+            });
+            formFiltros._listenerAdded = true;
           }
 
-          // INFORMES
-          if (pageId === 'informes') {
-            const formFiltros = document.getElementById('form-filtros');
-            if (formFiltros && !formFiltros._listenerAdded) {
-              formFiltros.addEventListener('submit', e => {
-                e.preventDefault();
-                const filtros = {
-                  estado: document.getElementById('filtroEstado')?.value || '',
-                  energia: document.getElementById('filtroEnergia')?.value || '',
-                  conectividad: document.getElementById('filtroConectividad')?.value || '',
-                  direccionContains: document.getElementById('filtroDireccion')?.value || ''
-                }; // 👈 cierre correcto del objeto
-
-                SCRIPT_RUN.withSuccessHandler(generarTablaVistaPrevia).listarTablerosFiltrados(filtros);
-              });
-              formFiltros._listenerAdded = true;
-            }
-
-            const btnDescargar = document.getElementById('btnDescargarInforme');
-            if (btnDescargar && !btnDescargar._listenerAdded) {
-              btnDescargar.addEventListener('click', () => {
-                btnDescargar.disabled = true;
-                const filtrosActuales = {
-                  estado: document.getElementById('filtroEstado')?.value || '',
-                  energia: document.getElementById('filtroEnergia')?.value || '',
-                  conectividad: document.getElementById('filtroConectividad')?.value || '',
-                  direccionContains: document.getElementById('filtroDireccion')?.value || '',
-                  switchContains: document.getElementById('filtroSwitch')?.value || ''
-                };
-                SCRIPT_RUN.withSuccessHandler(base64 => {
-                  try {
-                    const dataUrl = 'data:application/pdf;base64,' + base64;
-                    const a = document.createElement('a');
-                    const ts = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                    a.href = dataUrl;
-                    a.download = `Informe_Tableros_${ts}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    M.toast({ html: 'Informe descargado correctamente.', classes: 'green darken-1' });
-                  } catch (err) {
-                    console.error(err);
-                    M.toast({ html: 'Error generando descarga.', classes: 'red darken-3' });
-                  } finally {
-                    btnDescargar.disabled = false;
-                  }
-                }).generarInformePDF(filtrosActuales);
-              });
-              btnDescargar._listenerAdded = true;
-            }
+          const btnDescargar = document.getElementById('btnDescargarInforme');
+          if (btnDescargar && !btnDescargar._listenerAdded) {
+            const handler = () => {
+              btnDescargar.disabled = true;
+              const filtrosActuales = {
+                estado: document.querySelector('input[name="filtroEstado"]:checked').value || '',
+                energia: document.querySelector('input[name="filtroEnergia"]:checked').value || '',
+                conectividad: document.querySelector('input[name="filtroConectividad"]:checked').value || '',
+                direccionContains: document.getElementById('filtroDireccion').value || '',
+                switchContains: document.getElementById('filtroSwitch').value || ''
+              };
+              SCRIPT_RUN.withSuccessHandler(base64 => {
+                try {
+                  const dataUrl = 'data:application/pdf;base64,' + base64;
+                  const a = document.createElement('a');
+                  const ts = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                  a.href = dataUrl;
+                  a.download = `Informe_Tableros_${ts}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  M.toast({ html: 'Informe descargado correctamente.', classes: 'green darken-1 toast-custom' });
+                } catch (err) {
+                  console.error(err);
+                  M.toast({ html: 'Error generando descarga.', classes: 'red darken-3 toast-custom' });
+                } finally {
+                  btnDescargar.disabled = false;
+                }
+              }).generarInformePDF(filtrosActuales);
+            };
+            btnDescargar.addEventListener('click', handler);
+            btnDescargar.addEventListener('touchstart', handler);
+            btnDescargar._listenerAdded = true;
           }
         }
 
@@ -937,11 +1053,13 @@
         // --- Navegación: tarjetas y botones Volver ---
         document.querySelectorAll('.boton-tarjeta[data-page], .btn-volver[data-page]').forEach(el => {
           if (!el) return;
-          el.addEventListener('click', () => {
+          const handler = () => {
             const pageId = el.getAttribute('data-page');
             if (pageId === 'mapa') abrirMapa();
             else window.showPage(pageId);
-          });
+          };
+          el.addEventListener('click', handler);
+          el.addEventListener('touchstart', handler);
         });
 
         // Inicializar selects al inicio
@@ -972,20 +1090,7 @@
       countDescarga.textContent = data.length;
       btnDescarga.disabled = false;
 
-      let html = `
-      <table class="striped highlight responsive-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Dirección</th>
-            <th>Estado</th>
-            <th>Energía</th>
-            <th>Conectividad</th>
-            <th>Proveedor</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
+      let html = '';
 
       data.slice(0, 400).forEach(r => {
         const classEstado = getClassForStatus(r.estado);
@@ -993,18 +1098,16 @@
         const classConectividad = getClassForStatus(r.conectividad);
 
         html += `
-        <tr>
-          <td>${r.id}</td>
-          <td>${r.direccion}</td>
-          <td class="${classEstado}">${r.estado}</td>
-          <td class="${classEnergia}">${r.energia}</td>
-          <td class="${classConectividad}">${r.conectividad}</td>
-          <td>${r.proveedor}</td>
-        </tr>
+        <div class="resultado-item">
+          <p><strong>ID:</strong> ${r.id}</p>
+          <p><strong>Dirección:</strong> ${r.direccion}</p>
+          <p><strong>Estado:</strong> <span class="${classEstado}">${r.estado}</span></p>
+          <p><strong>Energía:</strong> <span class="${classEnergia}">${r.energia}</span></p>
+          <p><strong>Conectividad:</strong> <span class="${classConectividad}">${r.conectividad}</span></p>
+          <p><strong>Proveedor:</strong> ${r.proveedor}</p>
+        </div>
       `;
       });
-
-      html += '</tbody></table>';
 
       if (data.length > 400) {
         html += `<p class="center-align" style="font-style: italic; margin-top: 15px;">
